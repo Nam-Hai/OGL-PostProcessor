@@ -457,7 +457,8 @@ export default class FluidPass {
       beforePass: ()=>{
         this.render()
         mesh.program.uniforms.tFluid.value = this.density.read.texture
-      }
+      },
+      resize: this.resize.bind(this)
     }];
 
     return passes

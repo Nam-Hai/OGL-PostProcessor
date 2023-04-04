@@ -82,6 +82,8 @@ export default class Canvas {
       height: height,
       width: height * this.camera.aspect,
     };
+
+    this.post.resize()
   }
 
   update(t) {

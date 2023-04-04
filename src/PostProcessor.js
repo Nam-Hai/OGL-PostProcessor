@@ -21,6 +21,7 @@ export default class PostProcessor {
         this.options = { wrapS, wrapT, minFilter, magFilter };
 
         this.passes = [];
+        this.resizeCallbacks = []
 
         this.geometry = geometry;
 
@@ -62,6 +63,7 @@ export default class PostProcessor {
         const passesRef = passEffect.addPassRef(this.geometry)
         for (const passRef of passesRef) {
           this.passes.push(passRef)
+          passRef.resize && (this.resizeCallbacks.push(passRef.resize))
         }
         return this;
     }
@@ -82,6 +84,8 @@ export default class PostProcessor {
 
         this.fbo.read.setSize(width, height)
         this.fbo.write.setSize(width, height)
+
+        this.resizeCallbacks.forEach(cb => cb({width, height}))
     }
 
     // Uses same arguments as renderer.render, with addition of optional texture passed in to avoid scene render
