@@ -2,7 +2,7 @@ import PostProcessor from "./PostProcessor";
 import { Program, Mesh, Vec2, Camera } from "ogl";
 
 export default class BloomPass {
-  constructor(gl, { enabled = true, iteration = 20, bloomStrength = 10, threshold = 0.6 } = {}) {
+  constructor(gl, { enabled = true, iteration = 5, bloomStrength = 1, threshold = 0.8 } = {}) {
     this.gl = gl;
     this.size = {
       width: innerWidth,

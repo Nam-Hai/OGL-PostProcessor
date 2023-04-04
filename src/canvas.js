@@ -44,7 +44,7 @@ export default class Canvas {
 
     // this.bloomPass = new BloomPass(this.gl);
     this.post = new PostProcessor(this.gl);
-    this.post.addPassEffect(this.fluidPass).addPassEffect(new BloomPass(this.gl));
+    this.post.addPassEffect(this.fluidPass).addPassEffect(new BloomPass(this.gl, {bloomStrength: 10, threshold: 0.6}));
 
     this.mesh = this.createMedia("2.jpg", 800);
     this.mesh.setParent(this.scene);
