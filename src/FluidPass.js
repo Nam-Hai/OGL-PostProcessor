@@ -10,7 +10,6 @@ import {
   Vec2,
   Box,
   NormalProgram,
-  Post,
 } from "ogl";
 
 // Resolution of simulation
@@ -24,7 +23,8 @@ const iterations = 3;
 const texelSize = { value: new Vec2(1 / simRes, 1 / simRes) };
 
 export default class FluidPass {
-  constructor(gl, {densityDissipation = 0.93, velocityDissipation = 0.98, pressureDissipation = 0.9, curlStrength = 20,  radius = 1} = {}) {
+  constructor(gl, {densityDissipation = 0.93, velocityDissipation = 0.98, pressureDissipation = 0.9, curlStrength = 20,  radius = 1, enabled = true} = {}) {
+    this.enabled = {value: enabled}
     this.params = {
       densityDissipation,
       velocityDissipation,
@@ -33,7 +33,6 @@ export default class FluidPass {
       radius
     }
     this.gl = gl;
-    this.renderer = this.gl.renderer;
 
     this.size = {
       width: innerWidth,
@@ -438,6 +437,32 @@ export default class FluidPass {
     this.camera.bottom = -this.size.height / 2;
     this.camera.updateMatrixWorld();
   }
+
+  addPassRef(geometry){
+    let program = new Program(this.gl, {
+      fragment,
+      vertex: defaultVertex,
+      uniforms: {
+        tMap: {value: null},
+        tFluid: {value: null},
+        uTime: {value: 0}
+      }
+    })
+    let mesh = new Mesh(this.gl, {geometry, program})
+
+    const passes = [{
+      mesh,
+      enabled: this.enabled,
+      textureUniform: 'tMap',
+      beforePass: ()=>{
+        this.render()
+        mesh.program.uniforms.tFluid.value = this.density.read.texture
+      }
+    }];
+
+    return passes
+  }
+
 }
 
 // Helper functions for larger device support
@@ -530,11 +555,7 @@ const fragment = /* glsl */ `
     void main() {
         vec3 fluid = texture2D(tFluid, vUv).rgb;
         vec2 uv = vUv - fluid.rg * 0.0002;
-
-        gl_FragColor = mix( texture2D(tMap, uv), vec4(fluid * 0.1 + 0.5, 1), step(0.5, vUv.x) ) ;
-
-        // Oscillate between fluid values and the distorted scene
-        // gl_FragColor = mix(texture2D(tMap, uv), vec4(fluid * 0.1 + 0.5, 1), smoothstep(0.0, 0.7, sin(uTime)));
+        gl_FragColor = texture2D(tMap, uv);
     }
 `;
 
@@ -740,5 +761,17 @@ const gradientSubtractShader = /* glsl */ `
         vec2 velocity = texture2D(uVelocity, vUv).xy;
         velocity.xy -= vec2(R - L, T - B);
         gl_FragColor = vec4(velocity, 0.0, 1.0);
+    }
+`;
+
+const defaultVertex = /* glsl */ `
+    attribute vec2 uv;
+    attribute vec2 position;
+
+    varying vec2 vUv;
+
+    void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 0, 1);
     }
 `;

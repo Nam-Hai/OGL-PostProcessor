@@ -12,6 +12,8 @@ import { basicFrag } from "./shaders/BasicFrag";
 import { N } from "./utils/namhai";
 import basicVer from "./shaders/BasicVer.glsl?raw";
 import FluidPass from "./FluidPass";
+import PostProcessor from "./PostProcessor";
+import BloomPass from './BloomPass'
 
 export default class Canvas {
   constructor() {
@@ -39,17 +41,13 @@ export default class Canvas {
     this.init();
     this.addEventListener();
 
-    this.fluidSim = new FluidPass(this.gl, {
-      densityDissipation: 0.99
+    this.fluidPass = new FluidPass(this.gl, {
+      densityDissipation: 0.99,
     });
-    this.post = new Post(this.gl);
-    this.pass = this.post.addPass({
-      fragment,
-      uniforms: {
-        tFluid: { value: null },
-        uTime: { value: 0 },
-      },
-    });
+
+    // this.bloomPass = new BloomPass(this.gl);
+    this.post = new PostProcessor(this.gl);
+    this.post.addPassEffect(this.fluidPass).addPassEffect(new BloomPass(this.gl))
 
     this.mesh = this.createMedia("2.jpg", 800);
     this.mesh.setParent(this.scene);
@@ -92,12 +90,8 @@ export default class Canvas {
     //   this.videoTexture.value.needsUpdate = true
     // }
 
-    this.mesh.rotation.y = t.elapsed / 1000;
+    // this.mesh.rotation.y = t.elapsed / 1000;
 
-    this.fluidSim.render();
-
-    this.pass.uniforms.tFluid.value = this.fluidSim.density.read.texture
-    this.pass.uniforms.uTime.value = t.elapsed / 1000
     this.post.render({
       scene: this.scene,
       camera: this.camera

@@ -1,10 +1,7 @@
 
-import { Program } from '../core/Program.js';
-import { Mesh } from '../core/Mesh.js';
-import { RenderTarget } from '../core/RenderTarget.js';
-import { Triangle } from './Triangle.js';
+import { Program, Mesh, RenderTarget, Triangle } from 'ogl'
 
-export class Post {
+export default class PostProcessor {
     constructor(
         gl,
         {
@@ -31,8 +28,8 @@ export class Post {
         this.targetOnly = targetOnly;
 
         const fbo = (this.fbo = {
-            read: null,
-            write: null,
+            read: new RenderTarget(this.gl),
+            write: new RenderTarget(this.gl),
             swap: () => {
                 let temp = fbo.read;
                 fbo.read = fbo.write;
@@ -53,12 +50,20 @@ export class Post {
             mesh,
             program,
             uniforms,
-            enabled,
+            enabled: {value: enabled},
             textureUniform,
         };
 
         this.passes.push(pass);
         return pass;
+    }
+
+    addPassEffect(passEffect){
+        const passesRef = passEffect.addPassRef(this.geometry)
+        for (const passRef of passesRef) {
+          this.passes.push(passRef)
+        }
+        return this;
     }
 
     resize({ width, height, dpr } = {}) {
@@ -81,7 +86,7 @@ export class Post {
 
     // Uses same arguments as renderer.render, with addition of optional texture passed in to avoid scene render
     render({ scene, camera, texture, target = null, update = true, sort = true, frustumCull = true, beforePostCallbacks }) {
-        const enabledPasses = this.passes.filter((pass) => pass.enabled);
+        const enabledPasses = this.passes.filter((pass) => pass.enabled.value);
 
         if (!texture) {
             this.gl.renderer.render({
@@ -100,6 +105,7 @@ export class Post {
 
         enabledPasses.forEach((pass, i) => {
             pass.mesh.program.uniforms[pass.textureUniform].value = !i && texture ? texture : this.fbo.read.texture;
+            pass.beforePass && pass.beforePass({scene, camera, texture: !i && texture ? texture : this.fbo.read.texture})
             this.gl.renderer.render({
                 scene: pass.mesh,
                 target: i === enabledPasses.length - 1 && (target || !this.targetOnly) ? target : this.fbo.write,
