@@ -24,7 +24,7 @@ const texelSize = { value: new Vec2(1 / simRes, 1 / simRes) };
 
 export default class FluidPass {
   constructor(gl, {densityDissipation = 0.93, velocityDissipation = 0.98, pressureDissipation = 0.9, curlStrength = 20,  radius = 1, enabled = true} = {}) {
-    this.enabled = {value: enabled}
+    this.enabled = enabled
     this.params = {
       densityDissipation,
       velocityDissipation,
@@ -438,30 +438,25 @@ export default class FluidPass {
     this.camera.updateMatrixWorld();
   }
 
-  addPassRef(geometry){
-    let program = new Program(this.gl, {
-      fragment,
-      vertex: defaultVertex,
-      uniforms: {
-        tMap: {value: null},
-        tFluid: {value: null},
-        uTime: {value: 0}
-      }
-    })
-    let mesh = new Mesh(this.gl, {geometry, program})
+  toggleEffect(){
+    this.enabled = !this.enabled
+    this.pass.enabled = this.enabled
+  }
 
-    const passes = [{
-      mesh,
+  addPassRef(addPass){
+    this.pass = addPass({
+      fragment,
+      uniforms: {
+        tFluid: {value: null},
+      },
       enabled: this.enabled,
       textureUniform: 'tMap',
-      beforePass: ()=>{
+      beforePass: ({scene, camera, texture})=>{
         this.render()
-        mesh.program.uniforms.tFluid.value = this.density.read.texture
-      },
-      resize: this.resize.bind(this)
-    }];
-
-    return passes
+        this.pass.program.uniforms.tFluid.value = this.density.read.texture
+      }
+    })
+    return {resizeCallback: this.resize.bind(this)}
   }
 
 }

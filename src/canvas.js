@@ -13,7 +13,7 @@ import { N } from "./utils/namhai";
 import basicVer from "./shaders/BasicVer.glsl?raw";
 import FluidPass from "./FluidPass";
 import PostProcessor from "./PostProcessor";
-import BloomPass from './BloomPass'
+import BloomPass from "./BloomPass";
 
 export default class Canvas {
   constructor() {
@@ -24,7 +24,7 @@ export default class Canvas {
     });
     this.gl = this.renderer.gl;
     document.body.appendChild(this.gl.canvas);
-    console.log('canvas')
+    console.log("canvas");
 
     this.camera = new Camera(this.gl);
     this.camera.position.z = 5;
@@ -38,19 +38,19 @@ export default class Canvas {
     this.raf = new N.RafR(this.update);
     this.ro = new N.ROR(this.onResize);
 
-    this.init();
-    this.addEventListener();
-
     this.fluidPass = new FluidPass(this.gl, {
       densityDissipation: 0.99,
     });
 
     // this.bloomPass = new BloomPass(this.gl);
     this.post = new PostProcessor(this.gl);
-    this.post.addPassEffect(this.fluidPass).addPassEffect(new BloomPass(this.gl))
+    this.post.addPassEffect(this.fluidPass).addPassEffect(new BloomPass(this.gl));
 
     this.mesh = this.createMedia("2.jpg", 800);
     this.mesh.setParent(this.scene);
+
+    this.init();
+    this.addEventListener();
   }
   async init() {
     this.raf.run();
@@ -83,7 +83,7 @@ export default class Canvas {
       width: height * this.camera.aspect,
     };
 
-    this.post.resize()
+    this.post && this.post.resize({ width: this.sizePixel.width, height: this.sizePixel.height});
   }
 
   update(t) {
@@ -96,8 +96,8 @@ export default class Canvas {
 
     this.post.render({
       scene: this.scene,
-      camera: this.camera
-    })
+      camera: this.camera,
+    });
   }
 
   createMedia(src, w, h = w) {

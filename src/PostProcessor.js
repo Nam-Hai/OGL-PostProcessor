@@ -41,7 +41,7 @@ export default class PostProcessor {
         this.resize({ width, height, dpr });
     }
 
-    addPass({ vertex = defaultVertex, fragment = defaultFragment, uniforms = {}, textureUniform = 'tMap', enabled = true } = {}) {
+    addPass({ vertex = defaultVertex, fragment = defaultFragment, uniforms = {}, textureUniform = 'tMap', enabled = true, beforePass} = {}) {
         uniforms[textureUniform] = { value: this.fbo.read.texture };
 
         const program = new Program(this.gl, { vertex, fragment, uniforms });
@@ -51,8 +51,9 @@ export default class PostProcessor {
             mesh,
             program,
             uniforms,
-            enabled: {value: enabled},
+            enabled,
             textureUniform,
+            beforePass
         };
 
         this.passes.push(pass);
@@ -60,11 +61,8 @@ export default class PostProcessor {
     }
 
     addPassEffect(passEffect){
-        const passesRef = passEffect.addPassRef(this.geometry)
-        for (const passRef of passesRef) {
-          this.passes.push(passRef)
-          passRef.resize && (this.resizeCallbacks.push(passRef.resize))
-        }
+        const { resizeCallback } = passEffect.addPassRef(this.addPass.bind(this))
+        resizeCallback && (this.resizeCallbacks.push(resizeCallback))
         return this;
     }
 
@@ -90,7 +88,7 @@ export default class PostProcessor {
 
     // Uses same arguments as renderer.render, with addition of optional texture passed in to avoid scene render
     render({ scene, camera, texture, target = null, update = true, sort = true, frustumCull = true, beforePostCallbacks }) {
-        const enabledPasses = this.passes.filter((pass) => pass.enabled.value);
+        const enabledPasses = this.passes.filter((pass) => pass.enabled);
 
         if (!texture) {
             this.gl.renderer.render({

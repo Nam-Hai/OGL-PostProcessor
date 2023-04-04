@@ -17,7 +17,7 @@ export default class BloomPass {
       top: this.size.height / 2,
       bottom: -this.size.height / 2,
     });
-    this.enabled = {value: enabled}
+    this.enabled = enabled
 
     this.postBloom = new PostProcessor(gl, { dpr: 0.5, targetOnly: true });
     this.bloomResolution = {value : new Vec2(this.postBloom.options.width, this.postBloom.options.height)}
@@ -50,31 +50,52 @@ export default class BloomPass {
     }
   }
 
-  addPassRef(geometry) {
-    let program = new Program(this.gl, {
+  toggleEffect(){
+    this.enabled = !this.enabled
+    this.pass.enabled = this.enabled
+  }
+
+  addPassRef(addPass) {
+    // let program = new Program(this.gl, {
+    //   fragment: compositeFragment,
+    //   vertex: defaultVertex,
+    //   uniforms: {
+    //     uResolution: this.resolution,
+    //     tBloom: {value: null},
+    //     uBloomStrength: this.bloomStrength,
+    //     tMap: { value: null },
+    //   },
+    // });
+    // let mesh = new Mesh(this.gl, { geometry, program });
+    //
+    // const passes = [
+    //   {
+    //     mesh,
+    //     enabled: this.enabled,
+    //     textureUniform: "tMap",
+    //     beforePass: ({scene, camera, texture}) => { 
+    //       this.postBloom.render({texture})
+    //       mesh.program.uniforms.tBloom.value = this.postBloom.uniform.value
+    //     },
+    //   },
+    // ];
+    // return passes;
+
+    this.pass = addPass({
       fragment: compositeFragment,
-      vertex: defaultVertex,
       uniforms: {
         uResolution: this.resolution,
         tBloom: {value: null},
         uBloomStrength: this.bloomStrength,
-        tMap: { value: null },
       },
-    });
-    let mesh = new Mesh(this.gl, { geometry, program });
-
-    const passes = [
-      {
-        mesh,
-        enabled: this.enabled,
-        textureUniform: "tMap",
-        beforePass: ({scene, camera, texture}) => { 
-          this.postBloom.render({texture})
-          mesh.program.uniforms.tBloom.value = this.postBloom.uniform.value
-        },
-      },
-    ];
-    return passes;
+      enabled: this.enabled,
+      textureUniform: 'tMap',
+      beforePass: ({scene, camera, texture})=> {
+        this.postBloom.render({texture})
+        this.pass.program.uniforms.tBloom.value = this.postBloom.uniform.value
+      }
+    })
+    return {resizeCallback: this.resize.bind(this)}
   }
 
   resize({ width, height }) {
@@ -86,7 +107,7 @@ export default class BloomPass {
     this.camera.updateMatrixWorld();
 
     this.resolution = {value: new Vec2(this.size.width, this.size.height)}
-    this.bloomResolution.value.set(postBloom.options.width, postBloom.options.height);
+    this.bloomResolution.value.set(this.postBloom.options.width, this.postBloom.options.height);
   }
 }
 
