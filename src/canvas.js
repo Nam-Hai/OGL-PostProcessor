@@ -14,7 +14,7 @@ import basicVer from "./shaders/BasicVer.glsl?raw";
 import FluidPass from "./FluidPass";
 import PostProcessor from "./PostProcessor";
 import BloomPass from "./BloomPass";
-import FXAAPass from "./FXAA";
+import FXAAPass from "./FXAAPass";
 
 export default class Canvas {
   constructor() {
