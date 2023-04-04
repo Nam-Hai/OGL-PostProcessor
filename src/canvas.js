@@ -14,6 +14,7 @@ import basicVer from "./shaders/BasicVer.glsl?raw";
 import FluidPass from "./FluidPass";
 import PostProcessor from "./PostProcessor";
 import BloomPass from "./BloomPass";
+import FXAAPass from "./FXAA";
 
 export default class Canvas {
   constructor() {
@@ -44,7 +45,8 @@ export default class Canvas {
 
     // this.bloomPass = new BloomPass(this.gl);
     this.post = new PostProcessor(this.gl);
-    this.post.addPassEffect(this.fluidPass).addPassEffect(new BloomPass(this.gl, {bloomStrength: 10, threshold: 0.6}));
+    let fxaaPass = new FXAAPass
+    this.post.addPassEffect(this.fluidPass).addPassEffect(new BloomPass(this.gl, {bloomStrength: 10, threshold: 0.6})).addPassEffect(fxaaPass)
 
     this.mesh = this.createMedia("2.jpg", 800);
     this.mesh.setParent(this.scene);
