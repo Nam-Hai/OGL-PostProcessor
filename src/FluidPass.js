@@ -431,6 +431,7 @@ export default class FluidPass {
 
   resize({ width, height }) {
     this.size = { width, height };
+    console.log('test', width, height);
     this.camera.left = -this.size.width / 2;
     this.camera.right = this.size.width / 2;
     this.camera.top = this.size.height / 2;

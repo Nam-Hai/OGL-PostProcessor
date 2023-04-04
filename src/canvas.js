@@ -15,6 +15,8 @@ import FluidPass from "./FluidPass";
 import PostProcessor from "./PostProcessor";
 import BloomPass from "./BloomPass";
 import FXAAPass from "./FXAAPass";
+import DitheringPass from "./DitheringPass";
+import ColorMapMono from "./ColorMapMono";
 
 export default class Canvas {
   constructor() {
@@ -40,13 +42,26 @@ export default class Canvas {
     this.ro = new N.ROR(this.onResize);
 
     this.fluidPass = new FluidPass(this.gl, {
-      densityDissipation: 0.99,
+      densityDissipation: 0.92,
     });
 
     // this.bloomPass = new BloomPass(this.gl);
     this.post = new PostProcessor(this.gl);
-    let fxaaPass = new FXAAPass
-    this.post.addPassEffect(this.fluidPass).addPassEffect(new BloomPass(this.gl, {bloomStrength: 10, threshold: 0.6})).addPassEffect(fxaaPass)
+    this.post
+      // .addPassEffect(new DitheringPass(this.gl, {dpr: 0.1}))
+      .addPassEffect(new ColorMapMono({
+        color: {
+          start:'#F21B3F',
+          end:'#08BDBD'
+        },
+        threshold: {
+          start: 0.12,
+          end: 0.6
+        }
+      }))
+      // .addPassEffect(new BloomPass(this.gl, {iteration: 20,bloomStrength: 2, threshold: 0.6}))
+      .addPassEffect(this.fluidPass)
+      // .addPassEffect(new FXAAPass)
 
     this.mesh = this.createMedia("2.jpg", 800);
     this.mesh.setParent(this.scene);
@@ -94,7 +109,7 @@ export default class Canvas {
     //   this.videoTexture.value.needsUpdate = true
     // }
 
-    // this.mesh.rotation.y = t.elapsed / 1000;
+    // this.mesh.rotation.z = t.elapsed / 2000;
 
     this.post.render({
       scene: this.scene,

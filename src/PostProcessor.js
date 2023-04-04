@@ -5,8 +5,8 @@ export default class PostProcessor {
     constructor(
         gl,
         {
-            width,
-            height,
+            width = innerWidth,
+            height = innerHeight,
             dpr,
             wrapS = gl.CLAMP_TO_EDGE,
             wrapT = gl.CLAMP_TO_EDGE,
@@ -29,8 +29,8 @@ export default class PostProcessor {
         this.targetOnly = targetOnly;
 
         const fbo = (this.fbo = {
-            read: new RenderTarget(this.gl),
-            write: new RenderTarget(this.gl),
+            read: new RenderTarget(this.gl, this.options),
+            write: new RenderTarget(this.gl, this.options ),
             swap: () => {
                 let temp = fbo.read;
                 fbo.read = fbo.write;
@@ -74,14 +74,14 @@ export default class PostProcessor {
         }
 
         dpr = this.dpr || this.gl.renderer.dpr;
-        width = Math.floor((this.width || this.gl.renderer.width) * dpr);
-        height = Math.floor((this.height || this.gl.renderer.height) * dpr);
+        let scaledWidth = Math.floor((this.width || this.gl.renderer.width) * dpr);
+        let scaledHeight = Math.floor((this.height || this.gl.renderer.height) * dpr);
 
-        this.options.width = width;
-        this.options.height = height;
+        this.options.width = scaledWidth;
+        this.options.height = scaledHeight;
 
-        this.fbo.read.setSize(width, height)
-        this.fbo.write.setSize(width, height)
+        this.fbo.read.setSize(scaledWidth, scaledHeight)
+        this.fbo.write.setSize(scaledWidth, scaledHeight)
 
         this.resizeCallbacks.forEach(cb => cb({width, height}))
     }
