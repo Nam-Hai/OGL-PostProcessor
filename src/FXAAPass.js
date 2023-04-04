@@ -3,8 +3,8 @@ import {Vec2} from 'ogl'
 export default class FXAAPass {
     constructor({enabled = true} = {}){
         this.size = {
-        width: innerWidth,
-        height: innerHeight,
+            width: innerWidth,
+            height: innerHeight,
         };
         this.resolution = {value: new Vec2(this.size.width, this.size.height)}
         this.enabled = enabled
@@ -34,27 +34,23 @@ export default class FXAAPass {
 }
 
 
-const fragment = /* glsl */ `
+const fragment = /* glsl */ `#version 300 es
     precision highp float;
 
-    // Default uniform for previous pass is 'tMap'.
-    // Can change this using the 'textureUniform' property
-    // when adding a pass.
     uniform sampler2D tMap;
-
     uniform vec2 uResolution;
 
-    varying vec2 vUv;
+    in vec2 vUv;
 
-    vec4 fxaa(sampler2D tex, vec2 uv, vec2 resolution) {
+    vec4 fxaa(in sampler2D tex, in vec2 uv, in vec2 resolution) {
         vec2 pixel = vec2(1) / resolution;
 
         vec3 l = vec3(0.299, 0.587, 0.114);
-        float lNW = dot(texture2D(tex, uv + vec2(-1, -1) * pixel).rgb, l);
-        float lNE = dot(texture2D(tex, uv + vec2( 1, -1) * pixel).rgb, l);
-        float lSW = dot(texture2D(tex, uv + vec2(-1,  1) * pixel).rgb, l);
-        float lSE = dot(texture2D(tex, uv + vec2( 1,  1) * pixel).rgb, l);
-        float lM  = dot(texture2D(tex, uv).rgb, l);
+        float lNW = dot(texture(tex, uv + vec2(-1, -1) * pixel).rgb, l);
+        float lNE = dot(texture(tex, uv + vec2( 1, -1) * pixel).rgb, l);
+        float lSW = dot(texture(tex, uv + vec2(-1,  1) * pixel).rgb, l);
+        float lSE = dot(texture(tex, uv + vec2( 1,  1) * pixel).rgb, l);
+        float lM  = dot(texture(tex, uv).rgb, l);
         float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
         float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
         
@@ -68,12 +64,12 @@ const fragment = /* glsl */ `
         dir = min(vec2(8, 8), max(vec2(-8, -8), dir * rcpDirMin)) * pixel;
         
         vec3 rgbA = 0.5 * (
-            texture2D(tex, uv + dir * (1.0 / 3.0 - 0.5)).rgb +
-            texture2D(tex, uv + dir * (2.0 / 3.0 - 0.5)).rgb);
+            texture(tex, uv + dir * (1.0 / 3.0 - 0.5)).rgb +
+            texture(tex, uv + dir * (2.0 / 3.0 - 0.5)).rgb);
 
         vec3 rgbB = rgbA * 0.5 + 0.25 * (
-            texture2D(tex, uv + dir * -0.5).rgb +
-            texture2D(tex, uv + dir * 0.5).rgb);
+            texture(tex, uv + dir * -0.5).rgb +
+            texture(tex, uv + dir * 0.5).rgb);
 
         float lB = dot(rgbB, l);
 
@@ -84,11 +80,12 @@ const fragment = /* glsl */ `
         );
     }
 
+    out vec4 glColor;
     void main() {
         vec4 aa = fxaa(tMap, vUv, uResolution);
 
         // Split screen in half to show side-by-side comparison
-        gl_FragColor = aa;
+        glColor = aa;
 
     }
 `;

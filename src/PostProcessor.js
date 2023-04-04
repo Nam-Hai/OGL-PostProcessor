@@ -87,7 +87,7 @@ export default class PostProcessor {
     }
 
     // Uses same arguments as renderer.render, with addition of optional texture passed in to avoid scene render
-    render({ scene, camera, texture, target = null, update = true, sort = true, frustumCull = true, beforePostCallbacks }) {
+    render(e, { scene, camera, texture, target = null, update = true, sort = true, frustumCull = true, beforePostCallbacks }) {
         const enabledPasses = this.passes.filter((pass) => pass.enabled);
 
         if (!texture) {
@@ -107,7 +107,7 @@ export default class PostProcessor {
 
         enabledPasses.forEach((pass, i) => {
             pass.mesh.program.uniforms[pass.textureUniform].value = !i && texture ? texture : this.fbo.read.texture;
-            pass.beforePass && pass.beforePass({scene, camera, texture: !i && texture ? texture : this.fbo.read.texture})
+            pass.beforePass && pass.beforePass(e, {scene, camera, texture: !i && texture ? texture : this.fbo.read.texture})
             this.gl.renderer.render({
                 scene: pass.mesh,
                 target: i === enabledPasses.length - 1 && (target || !this.targetOnly) ? target : this.fbo.write,
@@ -120,26 +120,23 @@ export default class PostProcessor {
     }
 }
 
-const defaultVertex = /* glsl */ `
-    attribute vec2 uv;
-    attribute vec2 position;
-
-    varying vec2 vUv;
-
+const defaultVertex = /* glsl */ `#version 300 es
+    in vec2 uv;
+    in vec2 position;
+    out vec2 vUv;
     void main() {
         vUv = uv;
         gl_Position = vec4(position, 0, 1);
     }
 `;
 
-const defaultFragment = /* glsl */ `
+const defaultFragment = /* glsl */ `#version 300 es
     precision highp float;
-
     uniform sampler2D tMap;
-    varying vec2 vUv;
-
+    in vec2 vUv;
+    out vec4 glColor;
     void main() {
-        gl_FragColor = texture2D(tMap, vUv);
+        glColor = texture(tMap, vUv);
     }
 `;
 

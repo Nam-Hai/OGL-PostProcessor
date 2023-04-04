@@ -43,7 +43,7 @@ export default class ColorMapMono {
 }
 
 
-const fragment = /* glsl */ `
+const fragment = /* glsl */ `#version 300 es
     precision highp float;
 
     uniform sampler2D tMap;
@@ -52,7 +52,8 @@ const fragment = /* glsl */ `
     uniform float uThresholdStart;
     uniform float uThresholdEnd;
 
-    varying vec2 vUv;
+    in vec2 vUv;
+    out vec4 glColor;
 
     float luma(vec3 color) {
         return dot(color, vec3(0.299, 0.587, 0.114));
@@ -62,17 +63,14 @@ const fragment = /* glsl */ `
     }
 
     void main() {
-        vec4 tex = texture2D(tMap, vUv);
+        vec4 tex = texture(tMap, vUv);
 
         float grey = luma(vec3(tex));
         grey = ilerp(grey, uThresholdStart, uThresholdEnd);
         grey = clamp(0.,grey, 1.);
 
-
         vec3 color = mix(uColorStart, uColorEnd, grey);
-        // Split screen in half to show side-by-side comparison
-        gl_FragColor = vec4(color, 1.);
-
+        glColor = vec4(color, 1.);
     }
 `;
 

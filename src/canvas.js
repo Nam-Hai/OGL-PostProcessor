@@ -9,14 +9,16 @@ import {
   Mesh,
 } from "ogl";
 import { basicFrag } from "./shaders/BasicFrag";
+import { basicVer } from "./shaders/BasicVer";
 import { N } from "./utils/namhai";
-import basicVer from "./shaders/BasicVer.glsl?raw";
 import FluidPass from "./FluidPass";
 import PostProcessor from "./PostProcessor";
 import BloomPass from "./BloomPass";
 import FXAAPass from "./FXAAPass";
 import DitheringPass from "./DitheringPass";
 import ColorMapMono from "./ColorMapMono";
+import ChromaticAberration from "./ChromaticAberationPass";
+import VignettePass from "./VignettePass";
 
 export default class Canvas {
   constructor() {
@@ -45,25 +47,29 @@ export default class Canvas {
       densityDissipation: 0.92,
     });
 
+    this.postMeshTexture = new PostProcessor(this.gl, {targetOnly: true})
+    this.postMeshTexture.addPassEffect(new DitheringPass(this.gl, {dpr: 0.1}))
     // this.bloomPass = new BloomPass(this.gl);
     this.post = new PostProcessor(this.gl);
     this.post
       // .addPassEffect(new DitheringPass(this.gl, {dpr: 0.1}))
-      .addPassEffect(new ColorMapMono({
-        color: {
-          start:'#F21B3F',
-          end:'#08BDBD'
-        },
-        threshold: {
-          start: 0.12,
-          end: 0.6
-        }
-      }))
-      // .addPassEffect(new BloomPass(this.gl, {iteration: 20,bloomStrength: 2, threshold: 0.6}))
+      // .addPassEffect(new ColorMapMono({
+      //   color: {
+      //     start:'#F21B3F',
+      //     end:'#08BDBD'
+      //   },
+      //   threshold: {
+      //     start: 0.12,
+      //     end: 0.6
+      //   }
+      // }))
       .addPassEffect(this.fluidPass)
-      // .addPassEffect(new FXAAPass)
+      .addPassEffect(new BloomPass(this.gl, {iteration: 10,bloomStrength: 1., direction:{x: 4, y: 2}, threshold: 0.8}))
+      // .addPassEffect(new VignettePass({noise: 0.14, boost: 1.5}))
+      .addPassEffect(new ChromaticAberration({uZoom: -0.2, uUnZoom: 0.9, noise: 0.09}))
+      .addPassEffect(new FXAAPass)
 
-    this.mesh = this.createMedia("2.jpg", 800);
+    this.mesh = this.createMedia("2.jpg", 650);
     this.mesh.setParent(this.scene);
 
     this.init();
@@ -103,15 +109,22 @@ export default class Canvas {
     this.post && this.post.resize({ width: this.sizePixel.width, height: this.sizePixel.height});
   }
 
-  update(t) {
+  update(e) {
     // if(this.video && this.video.readyState >= this.video.HAVE_CURRENT_DATA){
     //   if(!this.videoTexture.value.image) this.videoTexture.value.image = this.video
     //   this.videoTexture.value.needsUpdate = true
     // }
 
-    // this.mesh.rotation.z = t.elapsed / 2000;
+    this.mesh.rotation.y = e.elapsed / 1000;
 
-    this.post.render({
+    this.postMeshTexture.render(e, {
+      texture: this.texture
+    })
+
+    this.mesh.program.uniforms.tMap = this.postMeshTexture.uniform
+
+    
+    this.post.render(e, {
       scene: this.scene,
       camera: this.camera,
     });
@@ -135,6 +148,8 @@ export default class Canvas {
       },
       cullFace: null,
     });
+
+    this.texture = texture
 
     let mesh = new Mesh(this.gl, { geometry, program });
     let width = (this.size.width * w) / this.sizePixel.width;

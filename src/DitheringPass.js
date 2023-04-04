@@ -27,8 +27,8 @@ export default class DitheringPass {
     }
     addPassRef(addPass){
         this.pass = addPass({
-            beforePass: ({scene, camera, texture}) =>{
-                this.postDithering.render({texture})
+            beforePass: (e, {scene, camera, texture}) =>{
+                this.postDithering.render(e, {texture})
                 this.pass.program.uniforms.tMap.value = this.postDithering.uniform.value
             }
         })
@@ -44,11 +44,12 @@ export default class DitheringPass {
 }
 
 
-const fragment = /* glsl */`precision highp float;
+const fragment = /* glsl */`#version 300 es
+precision highp float;
 
 uniform sampler2D tMap;
 uniform vec2 uResolution;
-varying vec2 vUv;
+in vec2 vUv;
 
 float luma(vec3 color) {
   return dot(color, vec3(0.299, 0.587, 0.114));
@@ -140,8 +141,10 @@ float ilerp(float x,float xi,float xf) {
   return (x - xi) / (xf - xi);
 }
 
+out vec4 glColor;
+
 void main() {
-  vec4 texture = texture2D(tMap,vUv);
+  vec4 texture = texture(tMap,vUv);
   if(texture.a <1.){
     discard;
   }
@@ -156,5 +159,5 @@ void main() {
   vec3 color = vec3(ditheredMap);
 
 //   color = mix(vec3(0.086,0.078,0.455) , vec3(0.333,0.839,0.584), grey);
-  gl_FragColor= vec4(color,1.);
+  glColor = vec4(color,1.);
 }`
