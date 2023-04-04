@@ -1,0 +1,27 @@
+body {
+    // background-color: antiquewhite;
+    background-color: black;
+}
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    overflow: hidden;
+}
+
+.header{
+  color: #B4F105;
+  font-family: sans-serif;
+  font-size: 15rem;
+  opacity: 0;
+}
+
+canvas {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
