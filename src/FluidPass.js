@@ -551,7 +551,7 @@ const fragment = /* glsl */ `#version 300 es
     out vec4 color;
     void main() {
         vec3 fluid = texture(tFluid, vUv).rgb;
-        vec2 uv = vUv - fluid.rg * 0.0002;
+        vec2 uv = vUv + fluid.rg * 0.0002;
         color = texture(tMap, uv);
     }
 `;

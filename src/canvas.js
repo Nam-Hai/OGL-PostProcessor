@@ -19,6 +19,7 @@ import DitheringPass from "./DitheringPass";
 import ColorMapMono from "./ColorMapMono";
 import ChromaticAberration from "./ChromaticAberationPass";
 import VignettePass from "./VignettePass";
+import ChromaticAccumulationPass from "./ChromaticAccumulationPass";
 
 export default class Canvas {
   constructor() {
@@ -44,11 +45,24 @@ export default class Canvas {
     this.ro = new N.ROR(this.onResize);
 
     this.fluidPass = new FluidPass(this.gl, {
-      densityDissipation: 0.92,
+      densityDissipation: 0.98,
+      pressureDissipation: 0.7,
+      curlStrength: 10,
+      radius: 0.2
     });
 
-    this.postMeshTexture = new PostProcessor(this.gl, {targetOnly: true})
-    this.postMeshTexture.addPassEffect(new DitheringPass(this.gl, {dpr: 0.1}))
+    // this.postMeshTexture = new PostProcessor(this.gl, {targetOnly: true})
+    // this.postMeshTexture.addPassEffect(new DitheringPass(this.gl, {dpr: 0.1}))
+      // .addPassEffect(new ColorMapMono({
+      //   color: {
+      //     start:'#F21B3F',
+      //     end:'#08BDBD'
+      //   },
+      //   threshold: {
+      //     start: 0.12,
+      //     end: 0.6
+      //   }
+      // }))
     // this.bloomPass = new BloomPass(this.gl);
     this.post = new PostProcessor(this.gl);
     this.post
@@ -64,9 +78,10 @@ export default class Canvas {
       //   }
       // }))
       .addPassEffect(this.fluidPass)
-      .addPassEffect(new BloomPass(this.gl, {iteration: 10,bloomStrength: 1., direction:{x: 4, y: 2}, threshold: 0.8}))
-      // .addPassEffect(new VignettePass({noise: 0.14, boost: 1.5}))
-      .addPassEffect(new ChromaticAberration({uZoom: -0.2, uUnZoom: 0.9, noise: 0.09}))
+      // .addPassEffect(new ChromaticAccumulationPass({direction:40, noise: 0.0}))
+      .addPassEffect(new VignettePass({noise: 0.19, boost: 1.5}))
+      .addPassEffect(new ChromaticAberration({uZoom: 0.2, uUnZoom: 0.9, noise: 0.0}))
+      .addPassEffect(new BloomPass(this.gl, {screen: true, iteration: 7, bloomStrength: 2, direction:{x: 2, y: 2}, threshold: 0.6}))
       .addPassEffect(new FXAAPass)
 
     this.mesh = this.createMedia("2.jpg", 650);
@@ -115,13 +130,13 @@ export default class Canvas {
     //   this.videoTexture.value.needsUpdate = true
     // }
 
-    this.mesh.rotation.y = e.elapsed / 1000;
+    // this.mesh.rotation.y = e.elapsed / 1000;
 
-    this.postMeshTexture.render(e, {
-      texture: this.texture
-    })
+    // this.postMeshTexture.render(e, {
+    //   texture: this.texture
+    // })
 
-    this.mesh.program.uniforms.tMap = this.postMeshTexture.uniform
+    // this.mesh.program.uniforms.tMap = this.postMeshTexture.uniform
 
     
     this.post.render(e, {

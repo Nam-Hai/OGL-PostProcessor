@@ -1,8 +1,10 @@
 import PostProcessor from "./PostProcessor";
-import { Program, Mesh, Vec2, Camera } from "ogl";
+import { Vec2, Camera } from "ogl";
+import { shader as screen } from "./shaders/screen.js";
 
 export default class BloomPass {
-  constructor(gl, { enabled = true, iteration = 5, bloomStrength = 1, threshold = 0.8 , direction = {x: 2, y:2}} = {}) {
+  constructor(gl, {screen = false, enabled = true, iteration = 5, bloomStrength = 1, threshold = 0.8 , direction = {x: 2, y:2}} = {}) {
+    this.screen = screen
     this.gl = gl;
     this.size = {
       width: innerWidth,
@@ -48,7 +50,6 @@ export default class BloomPass {
     });
     // Re-add the gaussian blur passes several times to the array to get smoother results
     for (let i = 0; i < iteration; i++) {
-      console.log('test')
       this.postBloom.passes.push(horizontalPass, verticalPass);
     }
   }
@@ -61,7 +62,7 @@ export default class BloomPass {
   addPassRef(addPass) {
 
     this.pass = addPass({
-      fragment: compositeFragment,
+      fragment: this.screen ? compositeScreenFragment : compositeFragment,
       uniforms: {
         uResolution: this.resolution,
         tBloom: {value: null},
@@ -159,6 +160,28 @@ const compositeFragment = /* glsl */ `#version 300 es
   out vec4 color;
 
   void main() {
-    color = texture(tMap, vUv) + texture(tBloom, vUv) * uBloomStrength;
+    vec4 tex = texture(tMap, vUv); 
+    vec4 bloom = texture(tBloom, vUv) * uBloomStrength;
+    color = tex + bloom;
+  }
+`;
+
+const compositeScreenFragment = /* glsl */ `#version 300 es
+  precision highp float;
+
+  uniform sampler2D tMap;
+  uniform sampler2D tBloom;
+  uniform vec2 uResolution;
+  uniform float uBloomStrength;
+
+  in vec2 vUv;
+  out vec4 color;
+
+  ${screen}
+
+  void main() {
+    vec4 tex = texture(tMap, vUv); 
+    vec4 bloom = texture(tBloom, vUv) * uBloomStrength;
+    color = screen(tex, bloom, .8);
   }
 `;
